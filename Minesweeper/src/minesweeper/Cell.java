@@ -1,13 +1,13 @@
 //*****************************Board Class****************************
 package minesweeper;
 
-import java.awt.Image;
+import java.awt.*;
 
 public class Cell {
-    private boolean mined;
-    private boolean hidden;
-    private boolean flagged;
-    private int minesClose;
+    public boolean mined;
+    public boolean hidden;
+    public boolean flagged;
+    public int minesClose;
     private Image img;
 
     public boolean getMined() {

@@ -7,38 +7,23 @@ package minesweeper;
  * Final Project
  */
 
-import java.applet.Applet;
-import java.awt.Button;
-import java.awt.Choice;
-import java.awt.Color;
-import java.awt.Event;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.LayoutManager;
-import java.awt.MediaTracker;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.applet.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
+import java.io.*;
+import java.util.*;
 
-import javax.imageio.ImageIO;
+import javax.imageio.*;
 
 //**************************SETTINGS FRAME****************************
 class settings extends Frame {
     Choice difficulty;
     Choice song;
     Button apply;
-    mineSweeperAttempt parent;
+    MinesweeperWindows parent;
 
-    settings(String title, mineSweeperAttempt p) {
+    settings(String title, MinesweeperWindows p) {
 	super(title);
 	parent = p;
 
@@ -91,17 +76,16 @@ class settings extends Frame {
 }
 
 // ********************************MAIN APPLET**************************
-public class mineSweeperAttempt extends Applet implements MouseListener {
+public class MinesweeperWindows extends Applet implements MouseListener {
     int easy = 9;
     int med = 16;
     int hardX = 16;
     int hardY = 30;
-    int totRows, totCols, r = 0, c = 0, xCoordinate = -25, yCoordinate = -25, totMines, blownX,
-	    blownY;
+    int totRows, totCols, r = 0, c = 0, xCoordinate = -25, yCoordinate = -25, totMines, blownX, blownY;
     int currentImage = 0;
     int sleepTime = 100; // milliseconds to sleep
     int totalImages = 25;
-    boolean click1, gamePlay, doAnimation;
+    boolean firstClick, gamePlay, doAnimation;
     BufferedImage explosion1;
     Image img[], explosion[];
     Cell board[][];
@@ -114,10 +98,12 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
 	fr.setVisible(true);
 	fr.setSize(400, 100);
 	img = new Image[13];
-	click1 = true;
+	firstClick = true;
 	totMines = 40;
 	doAnimation = false;
 	addMouseListener(this);
+
+	// GameBoard board = new GameBoard();
 
 	myTimer = new Timer(true);
 	myTimer.schedule(new TimerTask() {
@@ -133,8 +119,8 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
 	for (int i = 0; i <= 12; i++)
 	    img[i] = getImage(getCodeBase(), "pics/" + i + ".png");
 
-	try // load the splice sheet into a buffered image
-	{
+	try {
+	    // load the splice sheet into a buffered image
 	    explosion1 = ImageIO.read(new File("pics/explosion25.png"));
 	}
 
@@ -199,7 +185,7 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
     }
 
     public void setDifficulty(String diff) {
-	click1 = true;
+	firstClick = true;
 	r = c = 0;
 
 	switch (diff) {
@@ -237,7 +223,7 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
 	    if (gamePlay) {
 		showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row);
 
-		if (click1)
+		if (firstClick)
 		    firstClick(col, row);
 		else if (!board[row][col].hidden() && board[row][col].getMinesClose() > 0
 			&& sameNumberOfFlags(row, col))
@@ -299,7 +285,7 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
 
 	reveal(col, row);
 
-	click1 = false;
+	firstClick = false;
     }
 
     public int minesClose(int col, int row) {
@@ -332,10 +318,9 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
     }
 
     /*
-     * all of the possibilities of tiles to reveal: 1. it is hidden, it has 0
-     * mines close to it 2. it is hidden, it has one or more mines close to it
-     * 3. it is hidden, it has a mine in it 4. it is not hidden, it has a number
-     * of mines close to it, it has the same number of flags close to it
+     * all of the possibilities of tiles to reveal: 1. it is hidden, it has 0 mines close to it 2. it is hidden, it has
+     * one or more mines close to it 3. it is hidden, it has a mine in it 4. it is not hidden, it has a number of mines
+     * close to it, it has the same number of flags close to it
      */
     public void reveal(int col, int row) {
 	if (outOfBounds(col, row))
@@ -346,8 +331,7 @@ public class mineSweeperAttempt extends Applet implements MouseListener {
 
 	// 1. it is hidden, it is not mined, it has 0 mines close to it,
 	// recursively reveal all others like it
-	if (board[row][col].hidden() && !board[row][col].mined()
-		&& board[row][col].getMinesClose() == 0) {
+	if (board[row][col].hidden() && !board[row][col].mined() && board[row][col].getMinesClose() == 0) {
 	    board[row][col].setHidden(false);
 	    reveal(col - 1, row - 1);
 	    reveal(col, row - 1);

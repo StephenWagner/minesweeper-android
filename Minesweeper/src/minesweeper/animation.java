@@ -25,10 +25,10 @@ import javax.imageio.ImageIO;
 class toolbar extends Frame 
 {
 	Button apply;
-	animation parent;
+	Animation parent;
 	Label startLabel;
 
-	toolbar(String title, animation p) 
+	toolbar(String title, Animation p) 
 	{
 		super(title);
 		parent = p;
@@ -73,7 +73,7 @@ class toolbar extends Frame
 
 
 // Main applet code*********************************
-public class animation extends Applet 
+public class Animation extends Applet 
 {
 	
 	boolean anim = false;
