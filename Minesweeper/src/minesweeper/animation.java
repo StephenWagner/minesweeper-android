@@ -22,13 +22,13 @@ import java.util.Timer;
 import javax.imageio.ImageIO;
 
 //**************************SETTINGS FRAME****************************
-class toolbar extends Frame 
+class Toolbar extends Frame 
 {
 	Button apply;
 	Animation parent;
 	Label startLabel;
 
-	toolbar(String title, Animation p) 
+	Toolbar(String title, Animation p) 
 	{
 		super(title);
 		parent = p;
@@ -78,7 +78,7 @@ public class Animation extends Applet
 	
 	boolean anim = false;
 	Button btn;
-	toolbar fr;
+	Toolbar fr;
 	private AudioClip boom;
 	private Image explosion[], tile;
 	private int totalImages = 25, // total number of images
@@ -94,7 +94,7 @@ public class Animation extends Applet
 	public void init() 
 	{
 		this.setSize(420, 420);
-		fr = new toolbar("Toolbar", this);
+		fr = new Toolbar("Toolbar", this);
 		fr.setVisible(true);
 		fr.setSize(400, 100);
 		
