@@ -17,13 +17,13 @@ import java.util.*;
 import javax.imageio.*;
 
 //**************************SETTINGS FRAME****************************
-class settings extends Frame {
+class Settings extends Frame {
     Choice difficulty;
     Choice song;
     Button apply;
     MinesweeperWindows parent;
 
-    settings(String title, MinesweeperWindows p) {
+    Settings(String title, MinesweeperWindows p) {
 	super(title);
 	parent = p;
 
@@ -89,12 +89,12 @@ public class MinesweeperWindows extends Applet implements MouseListener {
     BufferedImage explosion1;
     Image img[], explosion[];
     Cell board[][];
-    settings fr;
+    Settings fr;
     MediaTracker mTracker;
     Timer myTimer;
 
     public void init() {
-	fr = new settings("Settings", this);
+	fr = new Settings("Settings", this);
 	fr.setVisible(true);
 	fr.setSize(400, 100);
 	img = new Image[13];

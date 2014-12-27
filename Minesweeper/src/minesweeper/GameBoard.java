@@ -1,26 +1,25 @@
+/**
+ * @author Stephen Wagner
+ */
+
 package minesweeper;
 
 import java.awt.*;
-import java.awt.image.*;
 import java.util.*;
 
 public class GameBoard {
-    static int EASY = 9, MEDIUM = 16, HARD = 30;
-    int totRows, totCols, r = 0, c = 0, xCoordinate = -25, yCoordinate = -25, totMines, blownX, blownY;
-    int currentImage = 0;
-    int sleepTime = 100; // milliseconds to sleep
-    int totalImages = 25;
-    boolean firstClick, gamePlay, doAnimation;
-    BufferedImage explosion1;
-    Image img[], explosion[];
-    Cell board[][];
+    private static int EASY = 9, MEDIUM = 16, HARD = 30;
+    private int totMines;
+    private boolean firstClick;
+    private Image[] img;
+    private Cell board[][];
 
     /**
      * Creates a new game board with a medium difficulty, i.e. 16 rows and 16 columns.
      */
-    public GameBoard() {
+    public GameBoard(Image[] img) {
 	totMines = 40;
-	newGame(MEDIUM, MEDIUM);
+	newGame(MEDIUM, MEDIUM, img);
     }
 
     /**
@@ -29,19 +28,19 @@ public class GameBoard {
      * @param difficulty
      *            must be either "easy" or "hard" -- any other String will initialize it as medium.
      */
-    public GameBoard(String difficulty) {
+    public GameBoard(String difficulty, Image[] img) {
 
 	switch (difficulty) {
-	case "easy":
-	    newGame(EASY, EASY);
+	case "Easy":
+	    newGame(EASY, EASY, img);
 	    totMines = 10;
 	    break;
-	case "hard":
-	    newGame(HARD, MEDIUM);
+	case "Hard":
+	    newGame(HARD, MEDIUM, img);
 	    totMines = 99;
 	    break;
 	default:
-	    newGame(MEDIUM, MEDIUM);
+	    newGame(MEDIUM, MEDIUM, img);
 	    totMines = 40;
 	}
 
@@ -58,30 +57,17 @@ public class GameBoard {
      * @param mines
      *            Total number of mines you want in your new board.
      */
-    public GameBoard(int row, int col, int mines) {
+    public GameBoard(int row, int col, int mines, Image[] img) {
 	totMines = mines;
-	newGame(row, col);
+	newGame(row, col, img);
     }
 
-    private void newGame(int numRows, int numCols) {
+    private void newGame(int numRows, int numCols, Image[] imgs) {
+	img = imgs;
+
 	board = new Cell[numRows][numCols];
-	for (int i = 0; i < totRows; i++) {
-	    for (int j = 0; j < totCols; j++) {
-		board[i][j] = new Cell();
-		board[i][j].setHidden(true); // initializes every space as hidden
-		board[i][j].setMined(false); // initializes no mines on the board
-		board[i][j].setMinesClose(0); // because no mines, minesClose = 0
-		board[i][j].setImg(img[10]); // initial image
-	    }
-	}
-    }
-
-    public void initializeBoard() {
-	gamePlay = true;
-
-	board = new Cell[totRows][totCols];
-	for (int i = 0; i < totRows; i++) {
-	    for (int j = 0; j < totCols; j++) {
+	for (int i = 0; i < board.length; i++) {
+	    for (int j = 0; j < board[0].length; j++) {
 		board[i][j] = new Cell();
 		board[i][j].setHidden(true); // initializes every space as hidden
 		board[i][j].setMined(false); // initializes no mines on the board
@@ -116,8 +102,8 @@ public class GameBoard {
 
 	// distribute mines
 	while (mineCount < totMines) {
-	    numY = rand.nextInt(totRows); // create a random distribution
-	    numX = rand.nextInt(totCols);
+	    numY = rand.nextInt(board.length); // create a random distribution
+	    numX = rand.nextInt(board[0].length);
 
 	    if (!board[numY][numX].mined() && checkPlacement(col, row, numX, numY)) {
 		board[numY][numX].setMined(true);
@@ -183,21 +169,26 @@ public class GameBoard {
      *            Row position, as in array[row][column]. This is the y-position cell on a screen (zero-based).
      */
     public void reveal(int col, int row) {
-	/*
-	 * all of the possibilities of tiles to reveal: 1. it is hidden, it has 0 mines close to it 2. it is hidden, it
-	 * has one or more mines close to it 3. it is hidden, it has a mine in it 4. it is not hidden, it has a number
-	 * of mines close to it, it has the same number of flags close to it
+	/*-
+	 * All the possibilities of tiles to reveal:
+	 * 0. it is not hidden
+	 * 1. it is hidden, it has 0 mines close to it
+	 * 2. it is hidden, it has one of more mines close to it
+	 * 3. it is hidden, it has a mine in it
+	 * 4. it is not hidden, it has a number of mines close to it,
+	 * 	it has the same number of flags close to it.
 	 */
 
 	if (outOfBounds(col, row))
 	    return;
 
-	xCoordinate = (col) * 25;
-	yCoordinate = (row) * 25;
+	// 0. it is not hidden
+	if (!board[row][col].hidden)
+	    return;
 
 	// 1. it is hidden, it is not mined, it has 0 mines close to it,
 	// recursively reveal all others like it
-	if (board[row][col].hidden() && !board[row][col].mined() && board[row][col].getMinesClose() == 0) {
+	if (!board[row][col].mined && board[row][col].minesClose == 0) {
 	    board[row][col].setHidden(false);
 	    reveal(col - 1, row - 1); // above and left
 	    reveal(col, row - 1); // above
@@ -211,7 +202,7 @@ public class GameBoard {
 	}
 
 	// 2. it is hidden, it has one or more mines close to it
-	if (board[row][col].hidden() && board[row][col].getMinesClose() > 0) {
+	if (board[row][col].minesClose > 0) {
 	    board[row][col].setHidden(false);
 	    // repaint(xCoordinate, yCoordinate, 25, 25);
 	    return;
@@ -219,14 +210,22 @@ public class GameBoard {
 
 	// 3. it is hidden, it has a mine in it
 	if (board[row][col].mined && !board[row][col].flagged) {
-	    gameOver(col, row);
+	    // ********************** gameOver(col, row);
 	}
-
     }
 
+    /**
+     * This is used when the user clicks on a space which has a number on it AND the immediate surrounding cells have
+     * the same number of flags on them as the number on the cell which was clicked on. In other words, use only if
+     * GameBoard.sameNumberOfFlags(int row, int col) returns TRUE for the cell which the user clicked on.
+     * 
+     * @param row
+     *            Row position, as in array[row][column]. This is the y-position cell on a screen (zero-based).
+     * @param col
+     *            Column position, as in array[row][column]. This is the x-position cell on a screen (zero-based).
+     */
     public void speedyOpener(int row, int col) {
-	// 4. it is not hidden, it has a number of mines close to it, it has the
-	// same number of flags close to it
+	// 4. it is not hidden, it has a number of mines close to it, it has the same number of flags close to it
 	for (int i = row - 1; i <= row + 1; i++) {
 	    for (int j = col - 1; j <= col + 1; j++) {
 		if (!outOfBounds(j, i))
@@ -234,13 +233,27 @@ public class GameBoard {
 			reveal(j, i);
 	    }
 	}
-	// if (!board[row][col].hidden() && board[row][col].getMinesClose()>0 &&
-	// sameNumberOfFlags(row, col))
-	// {
-	//
-	// }
     }
 
+    /**
+     * Use this method when the user clicks on a cell which is already cleared (GameBoard.getHidden(row, col) returns
+     * false) and the cell has a number on it greater than 0 (GameBoard.getMinesClose(row, col) returns > 0). Example of
+     * how to use it in a click event:
+     * 
+     * <pre>
+     * if (!board.getHidden(ySq, xSq) &amp;&amp; board.getMinesClose(ySq, xSq) &gt; 0 &amp;&amp; board.sameNumberOfFlags(ySq, xSq)) {
+     *     board.speedyOpener(ySq, xSq);
+     * } else
+     *     board.reveal(xSq, ySq);
+     * </pre>
+     * 
+     * @param row
+     *            Row position, as in array[row][column]. This is the y-position cell on a screen (zero-based).
+     * @param col
+     *            Column position, as in array[row][column]. This is the x-position cell on a screen (zero-based).
+     * @return True only if the cell which was clicked on has the same number of flags immediately surrounding it as it
+     *         has mines immediately surrounding it.
+     */
     public boolean sameNumberOfFlags(int row, int col) {
 	int count = 0;
 
@@ -264,14 +277,20 @@ public class GameBoard {
 		    revealed++;
 	    }
 
-	if (revealed == totRows * totCols - totMines) {
+	if (revealed == board.length * board[0].length - totMines) {
 	    makeAllMinesFlagged();
 	}
 
-	return revealed == totRows * totCols - totMines;
+	return revealed == board.length * board[0].length - totMines;
     }
 
     private void makeAllMinesFlagged() {
+	// for(Cell[] array: board)
+	// for(Cell c: array){
+	// if(c.mined)
+	// c.setFlagged(true);
+	// }
+
 	for (int i = 0; i < board.length; i++)
 	    for (int j = 0; j < board[i].length; j++) {
 		if (board[i][j].mined())
@@ -279,38 +298,45 @@ public class GameBoard {
 	    }
     }
 
-    public void gameOver(int col, int row) {
-	gamePlay = false;
+    // public void gameOver(int col, int row) {
+    // gamePlay = false;
+    //
+    // for (int i = 0; i < board.length; i++)
+    // for (int j = 0; j < board[i].length; j++) {
+    // if (i == row && j == col)
+    // board[i][j].setImg(explosion[1]);
+    // if (board[i][j].flagged() && !board[i][j].mined())
+    // board[i][j].setImg(img[11]);
+    // if (board[i][j].mined())
+    // board[i][j].setHidden(false);
+    // }
+    // }
 
-	for (int i = 0; i < board.length; i++)
-	    for (int j = 0; j < board[i].length; j++) {
-		if (i == row && j == col)
-		    board[i][j].setImg(explosion[1]);
-		if (board[i][j].flagged() && !board[i][j].mined())
-		    board[i][j].setImg(img[11]);
-		if (board[i][j].mined())
-		    board[i][j].setHidden(false);
-	    }
-
-	startAnim(row, col);
-	// //from the earth animation-- no idea why it's here, really
-	// public void start(Graphics g)
-	// {
-	// g.drawImage(explosion[0],(x+10)*25-19, (y+10)*25-19, 64, 64, this);
-	// currentImage = 1;
-	// }
-
-	// repaint((x+10)*25-19, (y+10)*25-19, 64, 64);
-	// some sort of end of game behavior??? or just a "Start new game"
-	// button on the main applet?
+    public boolean getFirstClick() {
+	return firstClick;
     }
 
-    public void startAnim(int row, int col) {
-	doAnimation = true;
-	currentImage = 0;
-	blownY = row * 25 - 20;
-	blownX = col * 25 - 20;
-	// repaint(col*25,row*25);
+    public int getRowLength() {
+	return board.length;
     }
 
+    public int getColumnLength() {
+	return board[0].length;
+    }
+
+    public boolean getFlagged(int row, int col) {
+	return board[row][col].flagged;
+    }
+
+    public boolean getHidden(int row, int col) {
+	return board[row][col].hidden;
+    }
+
+    public int getMinesClose(int row, int col) {
+	return board[row][col].minesClose;
+    }
+
+    public Image getImage(int row, int col) {
+	return board[row][col].getImg();
+    }
 }

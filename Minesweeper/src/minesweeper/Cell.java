@@ -1,4 +1,7 @@
-//*****************************Board Class****************************
+/**
+ * @author Stephen Wagner
+ */
+
 package minesweeper;
 
 import java.awt.*;
