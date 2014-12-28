@@ -19,6 +19,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
     int currentImage = 0;
     int sleepTime = 100; // milliseconds to sleep
     int totalImages = 25;
+    int exploded[];
     boolean firstClick, gamePlay, doAnimation;
     BufferedImage explosion1;
     Image img[], explosion[];
@@ -111,21 +112,40 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	int col = (x) / 25;
 	int row = (y) / 25;
 
-	if (e.getButton() == 1)
+	if (e.getButton() == 1) {
 	    // if (gamePlay) {
-	    showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row);
+	    showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row + " Mines left: " + board.minesLeft());
 
-	if (board.getFirstClick()) {
-	    board.firstClick(col, row);
-	} else if (!board.getHidden(row, col) && board.getMinesClose(row, col) > 0 && board.sameNumberOfFlags(row, col)) {
-	    board.speedyOpener(row, col);
-	} else
-	    board.reveal(col, row);
-	// }
+	    if (board.getFirstClick()) {
+		board.firstClick(col, row);
+	    } else if (!board.getHidden(row, col) && board.getMinesClose(row, col) > 0
+		    && board.sameNumberOfFlags(row, col)) {
+		board.speedyOpener(row, col);
+	    } else
+		board.reveal(col, row);
+	}
 	if (e.getButton() > 1 && board.getHidden(row, col))
 	    board.toggleFlag(row, col);
 
 	repaint();
+    }
+
+    private void setImages() {
+	exploded = board.getExploded();
+	for (int i = 0; i < board.getRowLength(); i++) {
+	    for (int j = 0; j < board.getColumnLength(); j++) {
+		if (board.getFirstClick()) {
+		    board.setImage(i, j, img[10]);
+		} else if (board.getGameOver()) {
+		    if (i == exploded[0] && j == exploded[1])
+			board.setImage(i, j, img[9]);
+		    if (board.getFlagged(i, j) && !board.getMined(i, j))
+			board.setImage(i, j, img[11]);
+		    if (board.getMined(i, j) && !board.getFlagged(i, j))
+			board.setHidden(i, j, false);
+		}
+	    }
+	}
     }
 
     public void mouseReleased(MouseEvent e) {

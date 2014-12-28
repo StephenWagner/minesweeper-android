@@ -9,10 +9,11 @@ import java.util.*;
 
 public class GameBoard {
     private static int EASY = 9, MEDIUM = 16, HARD = 30;
-    private int totMines;
-    private boolean firstClick;
+    private int totMines = 0, totFlags = 0;
+    private boolean firstClick = true, gameOver = false;
     private Image[] img;
     private Cell board[][];
+    private int exploded[] = null;
 
     /**
      * Creates a new game board with a medium difficulty, i.e. 16 rows and 16 columns.
@@ -89,10 +90,10 @@ public class GameBoard {
     public void toggleFlag(int row, int col) {
 	if (!board[row][col].flagged()) {
 	    board[row][col].setFlagged(true);
-	    // repaint();
+	    totFlags++;
 	} else {
 	    board[row][col].setFlagged(false);
-	    // repaint();
+	    totFlags--;
 	}
     }
 
@@ -167,8 +168,9 @@ public class GameBoard {
      *            Column position, as in array[row][column]. This is the x-position cell on a screen (zero-based).
      * @param row
      *            Row position, as in array[row][column]. This is the y-position cell on a screen (zero-based).
+     * @return TRUE if the cell is clear, FALSE only if the cell has a mine in it.
      */
-    public void reveal(int col, int row) {
+    public boolean reveal(int col, int row) {
 	/*-
 	 * All the possibilities of tiles to reveal:
 	 * 0. it is not hidden
@@ -180,11 +182,11 @@ public class GameBoard {
 	 */
 
 	if (outOfBounds(col, row))
-	    return;
+	    return true;
 
 	// 0. it is not hidden
 	if (!board[row][col].hidden)
-	    return;
+	    return true;
 
 	// 1. it is hidden, it is not mined, it has 0 mines close to it,
 	// recursively reveal all others like it
@@ -198,20 +200,24 @@ public class GameBoard {
 	    reveal(col - 1, row + 1); // below and left
 	    reveal(col, row + 1); // below
 	    reveal(col + 1, row + 1); // below and right
-	    // repaint(xCoordinate, yCoordinate, 25, 25);
+	    return true;
 	}
 
 	// 2. it is hidden, it has one or more mines close to it
 	if (board[row][col].minesClose > 0) {
 	    board[row][col].setHidden(false);
 	    // repaint(xCoordinate, yCoordinate, 25, 25);
-	    return;
+	    return true;
 	}
 
 	// 3. it is hidden, it has a mine in it
 	if (board[row][col].mined && !board[row][col].flagged) {
+	    gameOver(col, row);
+	    return false;
 	    // ********************** gameOver(col, row);
 	}
+
+	return true;
     }
 
     /**
@@ -298,19 +304,33 @@ public class GameBoard {
 	    }
     }
 
-    // public void gameOver(int col, int row) {
-    // gamePlay = false;
-    //
-    // for (int i = 0; i < board.length; i++)
-    // for (int j = 0; j < board[i].length; j++) {
-    // if (i == row && j == col)
-    // board[i][j].setImg(explosion[1]);
-    // if (board[i][j].flagged() && !board[i][j].mined())
-    // board[i][j].setImg(img[11]);
-    // if (board[i][j].mined())
-    // board[i][j].setHidden(false);
-    // }
-    // }
+    public void gameOver(int col, int row) {
+	gameOver = true;
+
+	// give the coordinates of the exploded cell
+	exploded = new int[2];
+	exploded[0] = row;
+	exploded[1] = col;
+
+	for (int i = 0; i < board.length; i++)
+	    for (int j = 0; j < board[i].length; j++) {
+		if (i == row && j == col)
+		    board[i][j].setImg(img[9]);
+		if (board[i][j].flagged && !board[i][j].mined)
+		    board[i][j].setImg(img[11]);
+		if (board[i][j].mined && !board[i][j].flagged)
+		    board[i][j].setHidden(false);
+	    }
+    }
+
+    /**
+     * Returns the coordinates of the exploded mine. Will return null when there is no exploded mine.
+     * 
+     * @return exploded[0] = row, exploded[1] = col; as in gameBoard[row][col];
+     */
+    public int[] getExploded() {
+	return exploded;
+    }
 
     public boolean getFirstClick() {
 	return firstClick;
@@ -328,8 +348,16 @@ public class GameBoard {
 	return board[row][col].flagged;
     }
 
+    public boolean getGameOver() {
+	return gameOver;
+    }
+
     public boolean getHidden(int row, int col) {
 	return board[row][col].hidden;
+    }
+
+    public boolean getMined(int row, int col) {
+	return board[row][col].mined;
     }
 
     public int getMinesClose(int row, int col) {
@@ -338,5 +366,17 @@ public class GameBoard {
 
     public Image getImage(int row, int col) {
 	return board[row][col].getImg();
+    }
+
+    public void setHidden(int row, int col, Boolean flag) {
+	board[row][col].setHidden(flag);
+    }
+
+    public void setImage(int row, int col, Image img) {
+	board[row][col].setImg(img);
+    }
+
+    public int minesLeft() {
+	return totMines - totFlags;
     }
 }
