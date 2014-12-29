@@ -18,30 +18,30 @@ public class GameBoard {
     /**
      * Creates a new game board with a medium difficulty, i.e. 16 rows and 16 columns.
      */
-    public GameBoard(Image[] img) {
+    public GameBoard() {
 	totMines = 40;
-	newGame(MEDIUM, MEDIUM, img);
+	newGame(MEDIUM, MEDIUM);
     }
 
     /**
      * Creates a new minesweeper game board with a specified difficulty
      * 
      * @param difficulty
-     *            must be either "easy" or "hard" -- any other String will initialize it as medium.
+     *            must be either "Easy" or "Hard" -- any other String will initialize it as medium.
      */
-    public GameBoard(String difficulty, Image[] img) {
+    public GameBoard(String difficulty) {
 
 	switch (difficulty) {
 	case "Easy":
-	    newGame(EASY, EASY, img);
+	    newGame(EASY, EASY);
 	    totMines = 10;
 	    break;
 	case "Hard":
-	    newGame(HARD, MEDIUM, img);
+	    newGame(HARD, MEDIUM);
 	    totMines = 99;
 	    break;
 	default:
-	    newGame(MEDIUM, MEDIUM, img);
+	    newGame(MEDIUM, MEDIUM);
 	    totMines = 40;
 	}
 
@@ -58,13 +58,12 @@ public class GameBoard {
      * @param mines
      *            Total number of mines you want in your new board.
      */
-    public GameBoard(int row, int col, int mines, Image[] img) {
+    public GameBoard(int row, int col, int mines) {
 	totMines = mines;
-	newGame(row, col, img);
+	newGame(row, col);
     }
 
-    private void newGame(int numRows, int numCols, Image[] imgs) {
-	img = imgs;
+    private void newGame(int numRows, int numCols) {
 
 	board = new Cell[numRows][numCols];
 	for (int i = 0; i < board.length; i++) {
@@ -73,10 +72,24 @@ public class GameBoard {
 		board[i][j].setHidden(true); // initializes every space as hidden
 		board[i][j].setMined(false); // initializes no mines on the board
 		board[i][j].setMinesClose(0); // because no mines, minesClose = 0
-		board[i][j].setImg(img[10]); // initial image
 	    }
 	}
     }
+
+    // private void newGame(int numRows, int numCols, Image[] imgs) {
+    // img = imgs;
+    //
+    // board = new Cell[numRows][numCols];
+    // for (int i = 0; i < board.length; i++) {
+    // for (int j = 0; j < board[0].length; j++) {
+    // board[i][j] = new Cell();
+    // board[i][j].setHidden(true); // initializes every space as hidden
+    // board[i][j].setMined(false); // initializes no mines on the board
+    // board[i][j].setMinesClose(0); // because no mines, minesClose = 0
+    // board[i][j].setImg(img[10]); // initial image
+    // }
+    // }
+    // }
 
     /**
      * Flags a cell. If already flagged, it will un-flag the cell. You must pass in the row and column of the cell which
@@ -117,11 +130,12 @@ public class GameBoard {
 	    for (int j = 0; j < board[i].length; j++) {
 		if (!board[i][j].mined()) {
 		    board[i][j].setMinesClose(minesClose(j, i));
-		    board[i][j].setImg(img[board[i][j].getMinesClose()]);
-		} else
-		    board[i][j].setImg(img[9]);
-		if (board[i][j].flagged() && !board[i][j].mined())
-		    board[i][j].setImg(img[12]);
+		    // board[i][j].setImg(img[board[i][j].getMinesClose()]);
+		}
+		// else
+		// board[i][j].setImg(img[9]);
+		// if (board[i][j].flagged() && !board[i][j].mined())
+		// board[i][j].setImg(img[12]);
 	    }
 	}
 
@@ -214,7 +228,6 @@ public class GameBoard {
 	if (board[row][col].mined && !board[row][col].flagged) {
 	    gameOver(col, row);
 	    return false;
-	    // ********************** gameOver(col, row);
 	}
 
 	return true;
@@ -285,9 +298,10 @@ public class GameBoard {
 
 	if (revealed == board.length * board[0].length - totMines) {
 	    makeAllMinesFlagged();
+	    totFlags = totMines;
 	}
 
-	return revealed == board.length * board[0].length - totMines;
+	return revealed == board.length * board[0].length - totMines && !gameOver;
     }
 
     private void makeAllMinesFlagged() {
@@ -312,15 +326,15 @@ public class GameBoard {
 	exploded[0] = row;
 	exploded[1] = col;
 
-	for (int i = 0; i < board.length; i++)
-	    for (int j = 0; j < board[i].length; j++) {
-		if (i == row && j == col)
-		    board[i][j].setImg(img[9]);
-		if (board[i][j].flagged && !board[i][j].mined)
-		    board[i][j].setImg(img[11]);
-		if (board[i][j].mined && !board[i][j].flagged)
-		    board[i][j].setHidden(false);
-	    }
+	// for (int i = 0; i < board.length; i++)
+	// for (int j = 0; j < board[i].length; j++) {
+	// if (i == row && j == col)
+	// board[i][j].setImg(img[9]);
+	// if (board[i][j].flagged && !board[i][j].mined)
+	// board[i][j].setImg(img[11]);
+	// if (board[i][j].mined && !board[i][j].flagged)
+	// board[i][j].setHidden(false);
+	// }
     }
 
     /**

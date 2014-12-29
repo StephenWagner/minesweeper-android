@@ -10,9 +10,6 @@ import java.util.*;
 import javax.imageio.*;
 
 public class MainAppletWindow extends Applet implements MouseListener {
-    /**
-     * 
-     */
     private static final long serialVersionUID = -4868516420381977551L;
 
     int totRows, totCols, r = 0, c = 0, xCoordinate = -25, yCoordinate = -25, totMines, blownX, blownY;
@@ -45,8 +42,6 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	    }
 	}, 0, 100);
 	mTracker = new MediaTracker(this);
-
-	// totRows = totCols = med; // starts the game off in medium difficulty
 
 	// loads pics into the img[] array
 	for (int i = 0; i <= 12; i++)
@@ -89,7 +84,8 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	catch (InterruptedException e) {
 	}
 
-	board = new GameBoard(img);
+	board = new GameBoard();
+	// board = new GameBoard(img);
 
 	resize(board.getColumnLength() * 25, board.getRowLength() * 25);
 
@@ -98,7 +94,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
     }
 
     public void setDifficulty(String diff) {
-	board = new GameBoard(diff, img);
+	board = new GameBoard(diff);
 	resize(board.getColumnLength() * 25, board.getRowLength() * 25);
 	repaint();
     }
@@ -127,16 +123,29 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	if (e.getButton() > 1 && board.getHidden(row, col))
 	    board.toggleFlag(row, col);
 
+	setImages();
 	repaint();
     }
 
     private void setImages() {
-	exploded = board.getExploded();
-	for (int i = 0; i < board.getRowLength(); i++) {
-	    for (int j = 0; j < board.getColumnLength(); j++) {
-		if (board.getFirstClick()) {
-		    board.setImage(i, j, img[10]);
-		} else if (board.getGameOver()) {
+	if (!board.getGameOver()) {
+	    for (int i = 0; i < board.getRowLength(); i++) {
+		for (int j = 0; j < board.getColumnLength(); j++) {
+		    if (!board.getMined(i, j)) {
+			board.setImage(i, j, img[board.getMinesClose(i, j)]);// set image to same as mines close
+		    } else
+			board.setImage(i, j, img[9]);
+		    /*-
+		     * When I get an incorrectly placed flag image,
+		     * I will need to code it in somewhere... probably in paint()
+		     */
+		}
+	    }
+	} else {
+	    exploded = board.getExploded();
+
+	    for (int i = 0; i < board.getRowLength(); i++)
+		for (int j = 0; j < board.getColumnLength(); j++) {
 		    if (i == exploded[0] && j == exploded[1])
 			board.setImage(i, j, img[9]);
 		    if (board.getFlagged(i, j) && !board.getMined(i, j))
@@ -144,7 +153,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 		    if (board.getMined(i, j) && !board.getFlagged(i, j))
 			board.setHidden(i, j, false);
 		}
-	    }
+
 	}
     }
 
