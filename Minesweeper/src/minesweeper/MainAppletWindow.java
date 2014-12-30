@@ -12,26 +12,24 @@ import javax.imageio.*;
 public class MainAppletWindow extends Applet implements MouseListener {
     private static final long serialVersionUID = -4868516420381977551L;
 
-    int totRows, totCols, r = 0, c = 0, xCoordinate = -25, yCoordinate = -25, totMines, blownX, blownY;
-    int currentImage = 0;
-    int sleepTime = 100; // milliseconds to sleep
-    int totalImages = 25;
-    int exploded[];
-    boolean firstClick, gamePlay, doAnimation;
-    BufferedImage explosion1;
-    Image img[], explosion[];
-    GameBoard board;
-    SettingsFrame fr;
-    MediaTracker mTracker;
-    Timer myTimer;
+    private int blownX, blownY;
+    private int currentImage = 0;
+    private int sleepTime = 100; // milliseconds to sleep
+    private int totalImages = 25;
+    private int exploded[];
+    private boolean doAnimation, newGame = true;
+    private BufferedImage explosion1;
+    private Image img[], explosion[];
+    private GameBoard board;
+    private SettingsFrame fr;
+    private MediaTracker mTracker;
+    private Timer myTimer;
 
     public void init() {
 	fr = new SettingsFrame("Settings", this);
 	fr.setVisible(true);
 	fr.setSize(400, 100);
-	img = new Image[13];
-	firstClick = true;
-	totMines = 40;
+	img = new Image[14];
 	doAnimation = false;
 	addMouseListener(this);
 
@@ -44,7 +42,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	mTracker = new MediaTracker(this);
 
 	// loads pics into the img[] array
-	for (int i = 0; i <= 12; i++)
+	for (int i = 0; i < img.length; i++)
 	    img[i] = getImage(getCodeBase(), "pics/" + i + ".png");
 
 	try {
@@ -84,17 +82,25 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	catch (InterruptedException e) {
 	}
 
+	// create the default game board
 	board = new GameBoard();
-	// board = new GameBoard(img);
 
 	resize(board.getColumnLength() * 25, board.getRowLength() * 25);
 
 	// System.setProperty("sun.awt.enableExtraMouseButtons", "true");
-
     }
 
+    /**
+     * Use this to set the difficulty of a new game.
+     * 
+     * @param diff
+     *            Pass in a string for the difficulty. "Easy" will create a board with 9 columns, 9 rows, and 10 mines;
+     *            "Hard" will create a board with 16 columns, 30 rows, and 99 mines; any other string will create a game
+     *            board with 16 columns, 16 rows, and 40 mines.
+     */
     public void setDifficulty(String diff) {
 	board = new GameBoard(diff);
+	newGame = true;
 	resize(board.getColumnLength() * 25, board.getRowLength() * 25);
 	repaint();
     }
@@ -108,37 +114,65 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	int col = (x) / 25;
 	int row = (y) / 25;
 
-	if (e.getButton() == 1) {
-	    // if (gamePlay) {
-	    showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row + " Mines left: " + board.minesLeft());
+	newGame = false;
 
-	    if (board.getFirstClick()) {
-		board.firstClick(col, row);
-	    } else if (!board.getHidden(row, col) && board.getMinesClose(row, col) > 0
-		    && board.sameNumberOfFlags(row, col)) {
-		board.speedyOpener(row, col);
-	    } else
-		board.reveal(col, row);
+	if (!board.getGameOver() && !board.winner()) {// clicking will only have an effect if there's still a game
+	    if (e.getButton() == 1) {
+
+		// shows info in the status-- at the bottom of the applet window
+		showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row + " Mines left: "
+			+ board.minesLeft());
+
+		// reveals the block which was
+		if (!board.reveal(col, row)) {
+		    setImages();
+		    startAnim();
+		    repaint();
+		} else {
+		    setImages();
+		    repaint();
+		}
+	    }
+
+	    if (e.getButton() > 1 && board.getHidden(row, col))
+		board.toggleFlag(row, col);
+
+	    setImages();
+	    repaint();
 	}
-	if (e.getButton() > 1 && board.getHidden(row, col))
-	    board.toggleFlag(row, col);
-
-	setImages();
-	repaint();
     }
 
     private void setImages() {
+	/*-
+	 * All image possibilities:
+	 * 1. Hidden, not flagged
+	 * 2. Hidden, flagged
+	 * 3. Revealed
+	 * 	a. 0 mines close
+	 * 	b. 1 mine close
+	 * 	c. 2 mines close
+	 * 	d. 3 mines close
+	 * 	e. 4 mines close
+	 * 	f. 5 mines close
+	 * 	g. 6 mines close
+	 * 	h. 7 mines close
+	 * 	i. 8 mines close
+	 * 4. Game over && mined && not flagged
+	 * 5. Game over && flagged && not mined
+	 * 6. Winner && mined
+	 */
 	if (!board.getGameOver()) {
 	    for (int i = 0; i < board.getRowLength(); i++) {
 		for (int j = 0; j < board.getColumnLength(); j++) {
-		    if (!board.getMined(i, j)) {
-			board.setImage(i, j, img[board.getMinesClose(i, j)]);// set image to same as mines close
+		    if (board.getHidden(i, j)) {// 1 and 2: hidden
+			if (board.getFlagged(i, j))// 2. hidden and flagged
+			    board.setImage(i, j, img[11]);
+			else if (board.winner() && board.getMined(i, j))
+			    board.setImage(i, j, img[11]);
+			else
+			    board.setImage(i, j, img[10]);// 1. Hidden and not flagged
 		    } else
-			board.setImage(i, j, img[9]);
-		    /*-
-		     * When I get an incorrectly placed flag image,
-		     * I will need to code it in somewhere... probably in paint()
-		     */
+			board.setImage(i, j, img[board.getMinesClose(i, j)]);// 3. Revealed (set mines close)
 		}
 	    }
 	} else {
@@ -146,16 +180,67 @@ public class MainAppletWindow extends Applet implements MouseListener {
 
 	    for (int i = 0; i < board.getRowLength(); i++)
 		for (int j = 0; j < board.getColumnLength(); j++) {
-		    if (i == exploded[0] && j == exploded[1])
+		    if (board.getMined(i, j) && !board.getFlagged(i, j))
 			board.setImage(i, j, img[9]);
 		    if (board.getFlagged(i, j) && !board.getMined(i, j))
-			board.setImage(i, j, img[11]);
-		    if (board.getMined(i, j) && !board.getFlagged(i, j))
-			board.setHidden(i, j, false);
+			board.setImage(i, j, img[12]);
 		}
 
 	}
     }
+
+    // private void setImages() {
+    // /*-
+    // * All image possibilities:
+    // * 1. Hidden, not flagged
+    // * 2. Hidden, flagged
+    // * 3. Revealed
+    // * a. 0 mines close
+    // * b. 1 mine close
+    // * c. 2 mines close
+    // * d. 3 mines close
+    // * e. 4 mines close
+    // * f. 5 mines close
+    // * g. 6 mines close
+    // * h. 7 mines close
+    // * i. 8 mines close
+    // * 4. Game over && mined
+    // * 5. Game over && flagged && not mined
+    // */
+    // if (!board.getGameOver()) {
+    // for (int i = 0; i < board.getRowLength(); i++) {
+    // for (int j = 0; j < board.getColumnLength(); j++) {
+    // if (board.getHidden(i, j)) {//1 and 2: hidden
+    // if (board.getFlagged(i, j))//2. hidden and flagged
+    // board.setImage(i, j, img[11]);
+    // else
+    // board.setImage(i, j, img[10]);//1. Hidden and not flagged
+    // }
+    // if (!board.getMined(i, j)) {
+    // board.setImage(i, j, img[board.getMinesClose(i, j)]);// set image to same as mines close
+    // } else
+    // board.setImage(i, j, img[9]);
+    // /*-
+    // * When I get an incorrectly placed flag image,
+    // * I will need to code it in somewhere... probably in paint()
+    // */
+    // }
+    // }
+    // } else {
+    // exploded = board.getExploded();
+    //
+    // for (int i = 0; i < board.getRowLength(); i++)
+    // for (int j = 0; j < board.getColumnLength(); j++) {
+    // if (i == exploded[0] && j == exploded[1])
+    // board.setImage(i, j, img[9]);
+    // if (board.getFlagged(i, j) && !board.getMined(i, j))
+    // board.setImage(i, j, img[12]);
+    // if (board.getMined(i, j) && !board.getFlagged(i, j))
+    // board.setHidden(i, j, false);
+    // }
+    //
+    // }
+    // }
 
     public void mouseReleased(MouseEvent e) {
     }
@@ -166,37 +251,12 @@ public class MainAppletWindow extends Applet implements MouseListener {
     public void mouseExited(MouseEvent e) {
     }
 
-    // public void gameOver(int col, int row) {
-    // gamePlay = false;
-    //
-    // for (int i = 0; i < board.length; i++)
-    // for (int j = 0; j < board[i].length; j++) {
-    // if (i == row && j == col)
-    // board[i][j].setImg(explosion[1]);
-    // if (board[i][j].flagged() && !board[i][j].mined())
-    // board[i][j].setImg(img[11]);
-    // if (board[i][j].mined())
-    // board[i][j].setHidden(false);
-    // }
-    //
-    // startAnim(row, col);
-    // // //from the earth animation-- no idea why it's here, really
-    // // public void start(Graphics g)
-    // // {
-    // // g.drawImage(explosion[0],(x+10)*25-19, (y+10)*25-19, 64, 64, this);
-    // // currentImage = 1;
-    // // }
-    //
-    // // repaint((x+10)*25-19, (y+10)*25-19, 64, 64);
-    // // some sort of end of game behavior??? or just a "Start new game"
-    // // button on the main applet?
-    // }
-
-    public void startAnim(int row, int col) {
+    public void startAnim() {
+	exploded = board.getExploded();// this gets the row and column of the exploded mine
 	doAnimation = true;
 	currentImage = 0;
-	blownY = row * 25 - 20;
-	blownX = col * 25 - 20;
+	blownY = exploded[0] * 25 - 20;
+	blownX = exploded[1] * 25 - 20;
 	// repaint(col*25,row*25);
     }
 
@@ -211,18 +271,25 @@ public class MainAppletWindow extends Applet implements MouseListener {
     // correctly flagged mines, and some sort of X over an incorrectly flagged
     // tile
     public void paint(Graphics g) {
+
 	for (int i = 0; i < board.getRowLength(); i++)
 	    for (int j = 0; j < board.getColumnLength(); j++) {
-		if (board.getHidden(i, j) && !board.getFlagged(i, j))
+		// if (board.getHidden(i, j) && !board.getFlagged(i, j))
+		// g.drawImage(img[10], j * 25, i * 25, 25, 25, this);
+		// else if (board.getHidden(i, j) && board.getFlagged(i, j)) {
+		// g.drawImage(img[11], j * 25, i * 25, 25, 25, this);
+		// } else if (board.getFlagged(i, j) && !board.getMined(i, j))
+		// g.drawImage(img[12], j * 25, i * 25, 25, 25, this);
+		// else
+		// g.drawImage(board.getImage(i, j), j * 25, i * 25, 25, 25, this);
+		if (newGame)
 		    g.drawImage(img[10], j * 25, i * 25, 25, 25, this);
-		else if (board.getHidden(i, j) && board.getFlagged(i, j))
-		    g.drawImage(img[11], j * 25, i * 25, 25, 25, this);
 		else
 		    g.drawImage(board.getImage(i, j), j * 25, i * 25, 25, 25, this);
+
 	    }
 
 	if (board.winner()) {
-	    gamePlay = false;
 	    g.setFont(new Font("Arial", Font.BOLD, 40));
 	    g.setColor(Color.blue);
 	    g.drawString("YOU WIN!!!", 20, 50);
@@ -246,7 +313,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 		// //play sound
 		// boom.play();
 
-		if (totRows < 10) {
+		if (board.getRowLength() < 10) {
 		    // display a large "Game Over" on the screen
 		    g.setFont(new Font("TimesRoman", Font.BOLD, 40));
 		    g.setColor(Color.red);

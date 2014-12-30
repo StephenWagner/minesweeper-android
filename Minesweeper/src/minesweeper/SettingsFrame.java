@@ -5,6 +5,10 @@ import java.awt.*;
 
 //**************************SETTINGS FRAME****************************
 class SettingsFrame extends Frame {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     Choice difficulty;
     Choice song;
     Button apply;
