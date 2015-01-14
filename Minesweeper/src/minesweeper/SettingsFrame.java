@@ -3,8 +3,10 @@ package minesweeper;
 import java.applet.*;
 import java.awt.*;
 
+import javax.swing.*;
+
 //**************************SETTINGS FRAME****************************
-class SettingsFrame extends Frame {
+class SettingsFrame extends JFrame {
     /**
      * 
      */
@@ -38,15 +40,6 @@ class SettingsFrame extends Frame {
 	apply = new Button("Apply");
 	add(apply);
 
-    }
-
-    // hide window when terminated by user
-    public boolean handleEvent(Event evtObj) {
-	if (evtObj.id == Event.WINDOW_DESTROY) {
-	    setVisible(false);
-	    return true;
-	}
-	return super.handleEvent(evtObj);
     }
 
     public boolean action(Event evtObj, Object arg) {
