@@ -29,7 +29,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	fr = new SettingsFrame("Settings", this);
 	fr.setVisible(true);
 	fr.setSize(400, 100);
-	img = new Image[14];
+	img = new Image[15];
 	doAnimation = false;
 	addMouseListener(this);
 
@@ -119,17 +119,19 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	if (!board.getGameOver() && !board.winner()) {// clicking will only have an effect if there's still a game
 	    if (e.getButton() == 1) {
 
-		// shows info in the status-- at the bottom of the applet window
-		showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row + " Mines left: "
-			+ board.minesLeft());
+		// THIS BLOCK KEPT HERE IN CASE DEBUGGING IS NEEDED IN THE FUTURE
+		// // shows info in the status-- at the bottom of the applet window
+		// showStatus("x:" + x + " y:" + y + " xBlock:" + col + " yBlock:" + row + " Mines left: "
+		// + board.minesLeft());
 
-		// reveals the block which was
+		// reveals the block which was clicked on
 		if (!board.reveal(col, row)) {
-		    setImages();
+		    setImages(row, col);
 		    startAnim();
 		    repaint();
+		    showStatus("Percentage Completed: " + board.getPercentFinished() + "%");
 		} else {
-		    setImages();
+		    setImages(row, col);
 		    repaint();
 		}
 	    }
@@ -137,12 +139,16 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	    if (e.getButton() > 1 && board.getHidden(row, col))
 		board.toggleFlag(row, col);
 
-	    setImages();
+	    setImages(row, col);
 	    repaint();
 	}
     }
 
-    private void setImages() {
+    private void setImages(int row, int col) {
+
+	// shows info in the status-- at the bottom of the applet window
+	showStatus(" xBlock:" + col + " yBlock:" + row + " Mines left: " + board.minesLeft());
+
 	/*-
 	 * All image possibilities:
 	 * 1. Hidden, not flagged
@@ -160,6 +166,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	 * 4. Game over && mined && not flagged
 	 * 5. Game over && flagged && not mined
 	 * 6. Winner && mined
+	 * 7. Game over && mined && exploded
 	 */
 	if (!board.getGameOver()) {
 	    for (int i = 0; i < board.getRowLength(); i++) {
@@ -167,7 +174,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 		    if (board.getHidden(i, j)) {// 1 and 2: hidden
 			if (board.getFlagged(i, j))// 2. hidden and flagged
 			    board.setImage(i, j, img[11]);
-			else if (board.winner() && board.getMined(i, j))
+			else if (board.winner() && board.getMined(i, j))// 6. winner and mined
 			    board.setImage(i, j, img[11]);
 			else
 			    board.setImage(i, j, img[10]);// 1. Hidden and not flagged
@@ -175,72 +182,35 @@ public class MainAppletWindow extends Applet implements MouseListener {
 			board.setImage(i, j, img[board.getMinesClose(i, j)]);// 3. Revealed (set mines close)
 		}
 	    }
-	} else {
+	}
+
+	// Game Over
+	else {
+	    // get the location of the exploded mine
 	    exploded = board.getExploded();
 
 	    for (int i = 0; i < board.getRowLength(); i++)
 		for (int j = 0; j < board.getColumnLength(); j++) {
-		    if (board.getMined(i, j) && !board.getFlagged(i, j))
-			board.setImage(i, j, img[9]);
+
+		    // 4. mined and not flagged
+		    if (board.getMined(i, j) && !board.getFlagged(i, j)) {
+
+			// 7. Mined and exploded
+			if (i == exploded[0] && j == exploded[1])
+			    board.setImage(i, j, img[14]);
+
+			// 4. mined and not flagged
+			else
+			    board.setImage(i, j, img[9]);
+		    }
+
+		    // 5. flagged and not mined
 		    if (board.getFlagged(i, j) && !board.getMined(i, j))
 			board.setImage(i, j, img[12]);
 		}
 
 	}
     }
-
-    // private void setImages() {
-    // /*-
-    // * All image possibilities:
-    // * 1. Hidden, not flagged
-    // * 2. Hidden, flagged
-    // * 3. Revealed
-    // * a. 0 mines close
-    // * b. 1 mine close
-    // * c. 2 mines close
-    // * d. 3 mines close
-    // * e. 4 mines close
-    // * f. 5 mines close
-    // * g. 6 mines close
-    // * h. 7 mines close
-    // * i. 8 mines close
-    // * 4. Game over && mined
-    // * 5. Game over && flagged && not mined
-    // */
-    // if (!board.getGameOver()) {
-    // for (int i = 0; i < board.getRowLength(); i++) {
-    // for (int j = 0; j < board.getColumnLength(); j++) {
-    // if (board.getHidden(i, j)) {//1 and 2: hidden
-    // if (board.getFlagged(i, j))//2. hidden and flagged
-    // board.setImage(i, j, img[11]);
-    // else
-    // board.setImage(i, j, img[10]);//1. Hidden and not flagged
-    // }
-    // if (!board.getMined(i, j)) {
-    // board.setImage(i, j, img[board.getMinesClose(i, j)]);// set image to same as mines close
-    // } else
-    // board.setImage(i, j, img[9]);
-    // /*-
-    // * When I get an incorrectly placed flag image,
-    // * I will need to code it in somewhere... probably in paint()
-    // */
-    // }
-    // }
-    // } else {
-    // exploded = board.getExploded();
-    //
-    // for (int i = 0; i < board.getRowLength(); i++)
-    // for (int j = 0; j < board.getColumnLength(); j++) {
-    // if (i == exploded[0] && j == exploded[1])
-    // board.setImage(i, j, img[9]);
-    // if (board.getFlagged(i, j) && !board.getMined(i, j))
-    // board.setImage(i, j, img[12]);
-    // if (board.getMined(i, j) && !board.getFlagged(i, j))
-    // board.setHidden(i, j, false);
-    // }
-    //
-    // }
-    // }
 
     public void mouseReleased(MouseEvent e) {
     }
@@ -257,7 +227,6 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	currentImage = 0;
 	blownY = exploded[0] * 25 - 20;
 	blownX = exploded[1] * 25 - 20;
-	// repaint(col*25,row*25);
     }
 
     // override update to eliminate flicker
@@ -266,22 +235,10 @@ public class MainAppletWindow extends Applet implements MouseListener {
     }
 
     // ******************paint method*********************
-    // TODO set up repaint so that I can just repaint one block at a time
-    // TODO if gameOver, it should show the mines, paint the flags over the
-    // correctly flagged mines, and some sort of X over an incorrectly flagged
-    // tile
     public void paint(Graphics g) {
 
 	for (int i = 0; i < board.getRowLength(); i++)
 	    for (int j = 0; j < board.getColumnLength(); j++) {
-		// if (board.getHidden(i, j) && !board.getFlagged(i, j))
-		// g.drawImage(img[10], j * 25, i * 25, 25, 25, this);
-		// else if (board.getHidden(i, j) && board.getFlagged(i, j)) {
-		// g.drawImage(img[11], j * 25, i * 25, 25, 25, this);
-		// } else if (board.getFlagged(i, j) && !board.getMined(i, j))
-		// g.drawImage(img[12], j * 25, i * 25, 25, 25, this);
-		// else
-		// g.drawImage(board.getImage(i, j), j * 25, i * 25, 25, 25, this);
 		if (newGame)
 		    g.drawImage(img[10], j * 25, i * 25, 25, 25, this);
 		else
@@ -293,6 +250,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	    g.setFont(new Font("Arial", Font.BOLD, 40));
 	    g.setColor(Color.blue);
 	    g.drawString("YOU WIN!!!", 20, 50);
+	    showStatus("Percentage Completed: " + board.getPercentFinished() + "%");
 	}
 
 	if (mTracker.checkID(currentImage, true)) {
@@ -307,7 +265,6 @@ public class MainAppletWindow extends Applet implements MouseListener {
 
 		if (currentImage == 0) {
 		    doAnimation = false;
-		    // super.update(g);
 		}
 
 		// //play sound
@@ -326,6 +283,11 @@ public class MainAppletWindow extends Applet implements MouseListener {
 		}
 	    }
 	}
+
+	if (board.getGameOver()) {
+	    showStatus("Percentage Completed: " + board.getPercentFinished() + "%");
+	}
+
     }
 
 }

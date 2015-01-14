@@ -476,4 +476,39 @@ public class GameBoard {
     public int minesLeft() {
 	return totMines - totFlags;
     }
+
+    public float getPercentFinished() {
+	int totalCells, clearedCells;
+	float percentFinished;
+
+	totalCells = board.length * board[0].length;
+	clearedCells = totalClearedCells();
+	percentFinished = (clearedCells * 100) / totalCells;
+
+	return percentFinished;
+    }
+
+    private int totalClearedCells() {
+	int totalClearedCells = 0;
+
+	for (int i = 0; i < board.length; i++)
+	    for (int j = 0; j < board[0].length; j++)
+		if (correctlyCompletedCell(i, j))
+		    totalClearedCells++;
+
+	return totalClearedCells;
+    }
+
+    private Boolean correctlyCompletedCell(int row, int col) {
+	Boolean correctlyCompleted;
+
+	/*-
+	 * A cell has been correctly done if it is:
+	 * 1. flagged and mined
+	 * 2. a. revealed and not mined
+	 */
+	correctlyCompleted = !board[row][col].hidden() && !board[row][col].mined() || board[row][col].flagged()
+		&& board[row][col].mined();
+	return correctlyCompleted;
+    }
 }
