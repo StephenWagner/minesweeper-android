@@ -1,22 +1,22 @@
 package minesweeper;
 
-import java.applet.*;
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 
 //**************************SETTINGS FRAME****************************
-class SettingsFrame extends JFrame {
+class SettingsFrame extends JFrame implements ActionListener {
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
-    Choice difficulty;
-    Choice song;
-    Button apply;
-    Applet parent;
+    private Choice difficulty;
+    private Choice song;
+    private Button applyButton, hintButton;
+    private MainAppletWindow parent;
 
-    SettingsFrame(String title, Applet p) {
+    SettingsFrame(String title, MainAppletWindow p) {
 	super(title);
 	parent = p;
 
@@ -37,22 +37,38 @@ class SettingsFrame extends JFrame {
 	add(song);
 
 	// add button to apply settings changes
-	apply = new Button("Apply");
-	add(apply);
+	applyButton = new Button("Apply");
+	applyButton.addActionListener(this);
+	add(applyButton);
 
+	// add hint button
+	hintButton = new Button("Hint");
+	hintButton.addActionListener(this);
+	add(hintButton);
+
+	this.setBounds(0, 0, 1000, 500);
     }
 
-    public boolean action(Event evtObj, Object arg) {
-	if (evtObj.target instanceof Choice) {
-	    return true;
+    public void actionPerformed(ActionEvent e) {
+	if (e.getSource() == applyButton) {
+	    parent.setDifficulty(difficulty.getSelectedItem());
 	}
 
-	if (evtObj.target instanceof Button) {
-	    ((MainAppletWindow) parent).setDifficulty(difficulty.getSelectedItem());
-	    return true;
+	if (e.getSource() == hintButton) {
+	    parent.hint();
 	}
-
-	return false;
     }
+
+    // public boolean action(Event evtObj, Object arg) {
+    // if (evtObj.target instanceof Choice) {
+    // return true;
+    // }
+    //
+    // if (evtObj.target instanceof Button) {
+    // return true;
+    // }
+    //
+    // return false;
+    // }
 
 }

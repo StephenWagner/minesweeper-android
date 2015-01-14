@@ -9,7 +9,7 @@ import java.util.*;
 
 public class GameBoard {
     private static int EASY = 9, MEDIUM = 16, HARD = 30;
-    private int totMines = 0, totFlags = 0;
+    private int totMines = 0, totFlags = 0, canHintNum = 3;
     private boolean firstClick = true, gameOver = false, speedyOpenOK = true;
     private Cell board[][];
     private int exploded[] = null;
@@ -486,6 +486,58 @@ public class GameBoard {
 	percentFinished = (clearedCells * 100) / totalCells;
 
 	return percentFinished;
+    }
+
+    /**
+     * Gives a hint. If a hint cannot be given, it will return the same row and col that was passed in.
+     * 
+     * @param row
+     * @param col
+     * @return An int array with the row being hint[0] and the column being hint[1].
+     */
+    public int[] getHint(int row, int col) {
+	int hint[] = new int[2];
+	hint[0] = row;
+	hint[1] = col;
+	int lowestMinesClose = 9;
+	Boolean changed = false;
+
+	if (!board[row][col].getHidden() && canHintNum > 0) {
+	    // checks every existing cell that surrounds the passed in cell
+	    for (int i = row - 1; i <= row + 1; i++) {
+		for (int j = col - 1; j <= col + 1; j++) {
+		    if (!outOfBounds(j, i)) {// makes sure it's not out of bounds before doing a comparison
+			// if cell is hidden, not mined, and the
+			if (board[i][j].hidden && !board[i][j].mined()
+				&& board[i][j].getMinesClose() <= lowestMinesClose) {
+			    lowestMinesClose = board[i][j].getMinesClose();
+			    hint[0] = i;
+			    hint[1] = j;
+			    changed = true;
+			}
+		    }
+		}
+	    }
+	}
+
+	if (changed)
+	    canHintNum--;
+
+	return hint;
+    }
+
+    public Boolean canHint() {
+	return canHintNum > 0;
+    }
+
+    public void setNumberOfHints(int totalNumberOfHints) {
+	if (totalNumberOfHints < 6) {
+	    this.canHintNum = totalNumberOfHints;
+	}
+    }
+
+    public int getNumberOfHintsLeft() {
+	return canHintNum;
     }
 
     private int totalClearedCells() {

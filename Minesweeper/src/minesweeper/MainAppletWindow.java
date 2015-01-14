@@ -9,6 +9,7 @@ import java.util.*;
 
 import javax.imageio.*;
 
+//********** Main Applet Window which the game is played on **********
 public class MainAppletWindow extends Applet implements MouseListener {
     private static final long serialVersionUID = -4868516420381977551L;
 
@@ -16,8 +17,8 @@ public class MainAppletWindow extends Applet implements MouseListener {
     private int currentImage = 0;
     private int sleepTime = 100; // milliseconds to sleep
     private int totalImages = 25;
-    private int exploded[];
-    private boolean doAnimation, newGame = true;
+    private int exploded[], hint[];
+    private boolean doAnimation, newGame = true, hinting = false, green = false;
     private BufferedImage explosion1;
     private Image img[], explosion[];
     private GameBoard board;
@@ -29,7 +30,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	fr = new SettingsFrame("Settings", this);
 	fr.setVisible(true);
 	fr.setSize(400, 100);
-	img = new Image[15];
+	img = new Image[16];
 	doAnimation = false;
 	addMouseListener(this);
 
@@ -99,6 +100,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
      *            board with 16 columns, 16 rows, and 40 mines.
      */
     public void setDifficulty(String diff) {
+	green = hinting = false;
 	board = new GameBoard(diff);
 	newGame = true;
 	resize(board.getColumnLength() * 25, board.getRowLength() * 25);
@@ -115,6 +117,19 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	int row = (y) / 25;
 
 	newGame = false;
+
+	if (hinting && !green) {
+	    hint = board.getHint(row, col);
+	    if (hint[0] == row && hint[1] == col) {
+		showStatus("Cannot hint here.");
+		return;
+	    }
+	}
+
+	if (hinting && green) {
+	    hinting = false;
+	    green = false;
+	}
 
 	if (!board.getGameOver() && !board.winner()) {// clicking will only have an effect if there's still a game
 	    if (e.getButton() == 1) {
@@ -155,6 +170,7 @@ public class MainAppletWindow extends Applet implements MouseListener {
 	 * All image possibilities:
 	 * 1. Hidden, not flagged
 	 * 2. Hidden, flagged
+	 * 2a. Hidden, flagged, hint cell
 	 * 3. Revealed
 	 * 	a. 0 mines close
 	 * 	b. 1 mine close
@@ -178,7 +194,10 @@ public class MainAppletWindow extends Applet implements MouseListener {
 			    board.setImage(i, j, img[11]);
 			else if (board.winner() && board.getMined(i, j))// 6. winner and mined
 			    board.setImage(i, j, img[11]);
-			else
+			else if (hinting && (hint[0] == i && hint[1] == j)) {
+			    board.setImage(i, j, img[15]);// hint
+			    green = true;
+			} else
 			    board.setImage(i, j, img[10]);// 1. Hidden and not flagged
 		    } else
 			board.setImage(i, j, img[board.getMinesClose(i, j)]);// 3. Revealed (set mines close)
@@ -221,6 +240,13 @@ public class MainAppletWindow extends Applet implements MouseListener {
     }
 
     public void mouseExited(MouseEvent e) {
+    }
+
+    public void hint() {
+	if (board.canHint()) {
+	    showStatus("Click the area you would like a hint in");
+	    this.hinting = true;
+	}
     }
 
     public void startAnim() {
