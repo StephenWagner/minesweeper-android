@@ -129,7 +129,6 @@ public class MainAppletWindow extends Applet implements MouseListener {
 		    setImages(row, col);
 		    startAnim();
 		    repaint();
-		    showStatus("Percentage Completed: " + board.getPercentFinished() + "%");
 		} else {
 		    setImages(row, col);
 		    repaint();
@@ -147,7 +146,10 @@ public class MainAppletWindow extends Applet implements MouseListener {
     private void setImages(int row, int col) {
 
 	// shows info in the status-- at the bottom of the applet window
-	showStatus(" xBlock:" + col + " yBlock:" + row + " Mines left: " + board.minesLeft());
+	if (board.getGameOver())
+	    showStatus("Percentage Completed: " + board.getPercentFinished() + "%");
+	else
+	    showStatus(" xBlock:" + col + " yBlock:" + row + " Mines left: " + board.minesLeft());
 
 	/*-
 	 * All image possibilities:
@@ -282,10 +284,6 @@ public class MainAppletWindow extends Applet implements MouseListener {
 		    g.drawString("Game Over", 100, 200);
 		}
 	    }
-	}
-
-	if (board.getGameOver()) {
-	    showStatus("Percentage Completed: " + board.getPercentFinished() + "%");
 	}
 
     }
